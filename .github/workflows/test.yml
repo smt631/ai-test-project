@@ -1,0 +1,72 @@
+name: AI Test Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉代码
+      - uses: actions/checkout@v4
+
+      # 2. 装 Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 3. 缓存 pip 依赖（加速）
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      # 4. 装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 5. 创建报告目录（修复：pytest-html 需要目录已存在）
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      # 6. 跑 Mock 测试（不调真实 API，每次提交都跑）
+      - name: Run unit tests (mocked)
+        env:
+          SKIP_LLM_CALLS: true
+        run: |
+          pytest -m "not eval and not safety" -v --cov=src --cov-report=xml --cov-fail-under=80
+
+      # 7. 跑 LLM 评测测试（调真实 API，只在 PR 时跑）
+      - name: Run LLM eval tests
+        if: github.event_name == 'pull_request'
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          pytest -m eval -v
+
+      # 8. 上传测试报告
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: reports/
+
+      # 9. 上传覆盖率报告
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml

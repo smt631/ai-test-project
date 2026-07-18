@@ -1,0 +1,5 @@
+question,expected_keyword,expected_output,category
+腾讯的创始人是谁？,马化腾,腾讯的创始人是马化腾。,factual
+阿里巴巴成立于哪一年？,1999,阿里巴巴成立于1999年。,factual
+光速是多少？,299792458,光速约为299792458米每秒。,scientific
+水的化学式是什么？,H2O,水的化学式是H2O。,scientific
