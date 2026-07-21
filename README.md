@@ -13,10 +13,11 @@ LLM / RAG 应用的输出是**非确定性**的——同一个问题每次回答
 ## 技术亮点
 
 - **非确定性测试的断言范式**：放弃 `assert output == expected`，改用「语义指标 + 阈值」判定，贴合 LLM 应用真实评测方法。
-- **分层成本控制**：通过 `SKIP_LLM_CALLS` 环境变量区分——日常 push 只跑 Mock 测试（不调 API、零花费）；发起 PR 才跑真实 LLM 评测，兼顾「CI 永远绿」与「真实验证」。
-- **DeepSeek 作 Judge，降本增效**：DeepSeek 兼容 OpenAI SDK，直接复用 DeepEval 的 `GPTModel` 接口替换默认 OpenAI Judge，评测成本大幅降低。
+- **兼容两种密钥命名**：代码同时识别 `LLM_API_KEY` / `LLM_BASE_URL` 与 `OPENAI_API_KEY` / `OPENAI_BASE_URL`，避免 CI 里因 Secret 名字不对而报 `Missing credentials`。
+- **成本控制开关**：通过 `SKIP_LLM_CALLS` 环境变量可一键关闭真实 LLM 调用，本地调试或低成本 CI 场景只跑 Mock 测试。
+- **DeepSeek 作 Judge，降本增效**：DeepSeek 兼容 OpenAI SDK，直接复用 DeepEval 的 `DeepSeekModel` 替换默认 OpenAI Judge，评测成本大幅降低。
 - **安全左移**：Prompt Injection 用例以数据驱动（`injection_cases.yaml`）组织，新增攻击手法只需补数据，不改测试代码。
-- **CI/CD 开箱即用**：GitHub Actions 自动拉代码、装依赖、跑全量测试，并上传测试报告与覆盖率报告作为构建产物。
+- **CI/CD 全量自动跑测**：GitHub Actions 自动拉代码、装依赖、跑 mock + eval + safety 全量测试，并上传测试报告与覆盖率报告作为构建产物。
 
 ## 项目结构
 
@@ -70,6 +71,8 @@ pytest -m eval -v                  # 只跑 LLM 评测
 
 ## CI 状态
 
-推送 `main` 或发起 PR 时，GitHub Actions 会自动运行全量测试，并上传 `test-report` 与 `coverage-report` 两个产物。
+推送 `main` / `develop` 或发起 PR 时，GitHub Actions 会自动运行全量测试（mock + eval + safety），并上传 `test-report` 与 `coverage-report` 两个产物。
 
-> 注：真实 LLM 评测需要在仓库 **Settings → Secrets** 中配置 `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` / `OPENAI_API_KEY` / `OPENAI_BASE_URL`。
+> 注：真实 LLM 评测需要在仓库 **Settings → Secrets** 中配置 API Key。兼容两种命名，任填其一即可：
+> - `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL`
+> - 或 `OPENAI_API_KEY` / `OPENAI_BASE_URL`

@@ -40,15 +40,15 @@ jobs:
       # 6. 全量测试：mock 单测 + LLM 评测 + 安全测试
       #    需在仓库 Settings → Secrets and variables → Actions 配置：
       #      LLM_API_KEY / LLM_BASE_URL / LLM_MODEL
-      #      OPENAI_API_KEY / OPENAI_BASE_URL
+      #      或 OPENAI_API_KEY / OPENAI_BASE_URL
       #    SKIP_LLM_CALLS=false 让 eval / safety 测试真正调用模型
       - name: Run all tests
         env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY || secrets.OPENAI_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL || secrets.OPENAI_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL || 'deepseek-chat' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || secrets.LLM_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL || secrets.LLM_BASE_URL }}
           SKIP_LLM_CALLS: "false"
         run: |
           pytest -v --cov=src --cov-report=xml

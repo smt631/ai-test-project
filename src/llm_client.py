@@ -27,9 +27,12 @@ def get_client():
     """获取 OpenAI 客户端单例"""
     global _client
     if _client is None:
+        # 兼容 GitHub Secrets 的两种命名：优先 LLM_API_KEY，回退 OPENAI_API_KEY
+        api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY", "")
+        base_url = os.getenv("LLM_BASE_URL") or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         _client = OpenAI(
-            api_key=os.getenv("LLM_API_KEY", ""),
-            base_url=os.getenv("LLM_BASE_URL", "https://api.openai.com/v1"),
+            api_key=api_key,
+            base_url=base_url,
             timeout=30,  # 30 秒超时
         )
     return _client

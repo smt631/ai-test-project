@@ -38,9 +38,10 @@ def pytest_runtest_setup(item):
 
 
 def get_judge_model():
-    base_url = os.getenv("OPENAI_BASE_URL", "")
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    model_name = os.getenv("LLM_MODEL", "deepseek-chat")
+    # 兼容 GitHub Secrets 的两种命名
+    base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("LLM_BASE_URL", "")
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LLM_API_KEY", "")
+    model_name = os.getenv("LLM_MODEL") or os.getenv("OPENAI_MODEL", "deepseek-chat")
 
     if api_key and "deepseek" in base_url:
         from deepeval.models.llms.deepseek_model import DeepSeekModel
